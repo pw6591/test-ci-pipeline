@@ -15,9 +15,9 @@ jobs:
          name: Build and push AMD64 Docker image
          command: |
            VERSION=$(cat package.json | jq -r .version)
-           docker build -t plossys/test-ci-pipeline:linux-amd64-${VERSION} -f Dockerfile .
+           docker build -t pw6591/test-ci-pipeline:linux-amd64-${VERSION} -f Dockerfile .
            docker login -u $DOCKERHUBUSERNAME -p $DOCKERHUBPASSWORD
-           docker push plossys/test-ci-pipeline:linux-amd64-${VERSION}
+           docker push pw6591/test-ci-pipeline:linux-amd64-${VERSION}
            
  arm-deploy:
    machine: true
@@ -28,9 +28,9 @@ jobs:
          command: |
            VERSION=$(cat package.json | jq -r .version)
            docker run --rm --privileged multiarch/qemu-user-static:register --reset
-           docker build -t plossys/test-ci-pipeline:linux-arm-${VERSION} -f Dockerfile.arm .
+           docker build -t pw6591/test-ci-pipeline:linux-arm-${VERSION} -f Dockerfile.arm .
            docker login -u $DOCKERHUBUSERNAME -p $DOCKERHUBPASSWORD
-           docker push plossys/test-ci-pipeline:linux-arm-${VERSION}    
+           docker push pw6591/test-ci-pipeline:linux-arm-${VERSION}    
            
  arm64-deploy:
    machine: true
@@ -43,9 +43,9 @@ jobs:
            docker run --rm --privileged multiarch/qemu-user-static:register --reset
            docker create --name register hypriot/qemu-register
            docker cp register:qemu-aarch64 qemu-aarch64-static
-           docker build -t plossys/test-ci-pipeline:linux-arm64-${VERSION} -f Dockerfile.arm64 .
+           docker build -t pw6591/test-ci-pipeline:linux-arm64-${VERSION} -f Dockerfile.arm64 .
            docker login -u $DOCKERHUBUSERNAME -p $DOCKERHUBPASSWORD
-           docker push plossys/test-ci-pipeline:linux-arm64-${VERSION}           
+           docker push pw6591/test-ci-pipeline:linux-arm64-${VERSION}           
            
  multi-arch-deploy:
    machine: true
@@ -74,13 +74,13 @@ jobs:
            echo "Pushing manifest lists"
            ./manifest-tool push from-args \
            --platforms linux/amd64,windows/amd64,linux/arm,linux/arm64  \
-           --template "plossys/test-ci-pipeline:OS-ARCH-${VERSION}" \
-           --target "plossys/test-ci-pipeline:latest"
+           --template "pw6591/test-ci-pipeline:OS-ARCH-${VERSION}" \
+           --target "pw6591/test-ci-pipeline:latest"
 
            ./manifest-tool push from-args \
            --platforms linux/amd64,windows/amd64,linux/arm,linux/arm64 \
-           --template "plossys/test-ci-pipeline:OS-ARCH-${VERSION}" \
-           --target "plossys/test-ci-pipeline:${VERSION}.${BUILD_NUMBER}"
+           --template "pw6591/test-ci-pipeline:OS-ARCH-${VERSION}" \
+           --target "pw6591/test-ci-pipeline:${VERSION}.${BUILD_NUMBER}"
 
 workflows:
   version: 2
