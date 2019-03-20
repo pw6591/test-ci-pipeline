@@ -1,0 +1,102 @@
+version: 2
+jobs:
+ test:
+   docker:
+     - image: circleci/node:10.15.0
+   steps:
+     - checkout
+     - run: npm install
+     - run: npm test
+ amd64-deploy:
+   machine: true
+   steps:
+     - checkout
+     - run:
+         name: Build and push AMD64 Docker image
+         command: |
+           VERSION=$(cat package.json | jq -r .version)
+           docker build -t plossys/test-ci-pipeline:linux-amd64-${VERSION} -f Dockerfile .
+           docker login -u $DOCKERHUBUSERNAME -p $DOCKERHUBPASSWORD
+           docker push plossys/test-ci-pipeline:linux-amd64-${VERSION}
+           
+ arm-deploy:
+   machine: true
+   steps:
+     - checkout
+     - run:
+         name: Build and push ARM Docker image
+         command: |
+           VERSION=$(cat package.json | jq -r .version)
+           docker run --rm --privileged multiarch/qemu-user-static:register --reset
+           docker build -t plossys/test-ci-pipeline:linux-arm-${VERSION} -f Dockerfile.arm .
+           docker login -u $DOCKERHUBUSERNAME -p $DOCKERHUBPASSWORD
+           docker push plossys/test-ci-pipeline:linux-arm-${VERSION}    
+           
+ arm64-deploy:
+   machine: true
+   steps:
+     - checkout
+     - run:
+         name: Build and push ARM64 Docker image
+         command: |
+           VERSION=$(cat package.json | jq -r .version)
+           docker run --rm --privileged multiarch/qemu-user-static:register --reset
+           docker create --name register hypriot/qemu-register
+           docker cp register:qemu-aarch64 qemu-aarch64-static
+           docker build -t plossys/test-ci-pipeline:linux-arm64-${VERSION} -f Dockerfile.arm64 .
+           docker login -u $DOCKERHUBUSERNAME -p $DOCKERHUBPASSWORD
+           docker push plossys/test-ci-pipeline:linux-arm64-${VERSION}           
+           
+ multi-arch-deploy:
+   machine: true
+   steps:
+     - checkout
+     
+     - run:
+         name: Wait for AppVeyor
+         command: |
+           chmod 755 .circleci/scripts/appveyor-logs.sh
+           .circleci/scripts/appveyor-logs.sh
+
+     - run:
+         name: Build and push Docker image
+         command: |
+           docker login -u $DOCKERHUBUSERNAME -p $DOCKERHUBPASSWORD
+           BUILD_NUMBER=${CIRCLE_BUILD_NUM}
+           VERSION=$(cat package.json | jq -r .version)
+                                 
+           echo "Downloading manifest-tool"
+           wget https://github.com/estesp/manifest-tool/releases/download/v0.9.0/manifest-tool-linux-amd64
+           mv manifest-tool-linux-amd64 manifest-tool
+           chmod +x manifest-tool
+           ./manifest-tool --version
+           
+           echo "Pushing manifest lists"
+           ./manifest-tool push from-args \
+           --platforms linux/amd64,windows/amd64,linux/arm,linux/arm64  \
+           --template "plossys/test-ci-pipeline:OS-ARCH-${VERSION}" \
+           --target "plossys/test-ci-pipeline:latest"
+
+           ./manifest-tool push from-args \
+           --platforms linux/amd64,windows/amd64,linux/arm,linux/arm64 \
+           --template "plossys/test-ci-pipeline:OS-ARCH-${VERSION}" \
+           --target "plossys/test-ci-pipeline:${VERSION}.${BUILD_NUMBER}"
+
+workflows:
+  version: 2
+  test-deploy:
+    jobs:
+    - test
+    - amd64-deploy:
+        requires:
+          - test
+    - arm-deploy:
+        requires:
+          - amd64-deploy
+    - arm64-deploy:
+        requires:
+          - amd64-deploy
+    - multi-arch-deploy:
+        requires:
+          - arm-deploy
+          - arm64-deploy

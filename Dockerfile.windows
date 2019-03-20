@@ -1,0 +1,15 @@
+ARG node=10.15
+ARG consul=0.7.5
+ARG envconsul=0.7.3
+
+FROM stefanscherer/node-windows:$node as build
+
+COPY bin /code/bin
+COPY package.json /code/package.json
+
+
+
+FROM stefanscherer/node-windows:$node
+WORKDIR /code
+COPY --from=build /code /code
+CMD [ "node", "bin/app.js" ]

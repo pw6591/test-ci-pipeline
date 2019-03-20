@@ -1,0 +1,20 @@
+{
+  "name": "nodetestapp",
+  "version": "1.0.0",
+  "description": "Test App for CI pipeline",
+  "main": "bin/app.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "node",
+    "test",
+    "for",
+    "CI"
+  ],
+  "author": "Prasanna Warunkar",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^23.6.0"
+  }
+}

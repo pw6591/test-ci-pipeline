@@ -1,0 +1,28 @@
+# appveyor file
+# https://www.appveyor.com/docs/appveyor-yml/
+
+image: Visual Studio 2017
+environment:
+  NODE_VERSION: 10.15
+
+platform:
+  - x64
+
+# build version format
+version: "{build}"
+
+# Install Node.js 
+install:
+  - ps: Install-Product node $env:NODE_VERSION
+  - npm install
+
+test_script:
+  # Output useful info for debugging.
+  - node --version && npm --version
+  #- ps: "npm test" # Pass comment to PS for easier debugging
+  - cmd: npm test 
+  
+build: off
+
+deploy_script:
+  - ps: .\build.ps1
