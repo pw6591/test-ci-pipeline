@@ -15,4 +15,4 @@ WORKDIR /code
 
 FROM node:$node
 COPY --from=build /code /code
-CMD [ "/code/bin/app.js" ]
+CMD ["node", "/code/bin/app.js" ]
